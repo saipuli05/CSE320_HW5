@@ -390,12 +390,16 @@ void *server_game_loop(void *arg) {
             }
         }
 
-        /* Broadcast the serialised game state to every connected client. */
+        /* Broadcast the serialised game state only to clients whose snake
+         * is still alive after this tick.  Per the instructor: once a
+         * snake dies, stop sending it GAME_STATE.  PLAYER_DEAD has already
+         * been delivered above for any snake that died this tick. */
         if (state_len > 0) {
             for (int slot = 0; slot < MAX_PLAYERS; slot++) {
                 int fd = fds_snapshot[slot];
                 int sid = snake_ids_snapshot[slot];
-                if (fd >= 0 && sid >= 0) {
+                if (fd >= 0 && sid >= 0 &&
+                    sid < MAX_PLAYERS && is_alive[sid]) {
                     (void)send_all_to_client_slot(server, slot, fd, sid,
                                                   state_buf,
                                                   (size_t)state_len);
